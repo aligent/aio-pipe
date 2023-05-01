@@ -1,0 +1,10 @@
+{
+  "name": "aio-apps-action",
+  "version": "2.0.2",
+  "description": "Bitbucket Pipeline to Build and Deploy AIO Apps",
+  "dependencies": {
+    "@adobe/aio-lib-ims": "^6.3.0",
+    "ts-node": "^10.9.1",
+    "@types/node": "^18.16.1"
+  }
+}

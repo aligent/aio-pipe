@@ -1,0 +1,10 @@
+name: Aligent Adobe App Builder Deploy Pipe
+image: aligent/aio-deploy-pipe
+description: This pipe is used to build, test and deploy apps to Adobe App Builder
+repository: git@bitbucket.org:aligent/aio-deploy-pipe.git
+maintainer: devops@aligent.com.au
+tags:
+    - bitbucket-pipelines
+    - pipes
+    - typescript
+  
