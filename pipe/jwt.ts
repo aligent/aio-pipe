@@ -3,6 +3,7 @@ import { env } from "./env"
 
     // TODO: try and get this into a similar format to the below file
     // to see if that authentication method works 
+    // may just try using this library? @adobe/aio-lib-ims
 
 //     ```js
 // {
@@ -29,18 +30,24 @@ import { env } from "./env"
 // }
 // ```
 
+interface imsConfig {
+    client_id: string,
+    client_secret: string,
+    technical_account_id: string,
+    ims_org_id: string,
+    private_key: string,
+    meta_scopes: string[]
+}
 
-// may just try using this library? @adobe/aio-lib-ims
 export function generateAuthToken() {
-    //generate jwt auth
     const key = process.env.KEY || ''
     const scopes = process.env.SCOPES || 'ent_eventpublisher_sdk'
-    const clientId = process.env.CLIENT_ID
-    const clientSecret = process.env.CLIENT_SECRET
-    const techAccId = process.env.TECHNICAL_ACCOUNT_ID
-    const imsOrgId = process.env.IMS_ORG_ID
+    const clientId = process.env.CLIENT_ID!
+    const clientSecret = process.env.CLIENT_SECRET!
+    const techAccId = process.env.TECHNICAL_ACCOUNT_ID!
+    const imsOrgId = process.env.IMS_ORG_ID!
 
-    const imsConfig = {
+    const imsConfig: imsConfig = {
         client_id: clientId,
         client_secret: clientSecret,
         technical_account_id: techAccId,
@@ -58,7 +65,7 @@ export function generateAuthToken() {
         })
 }
 
-async function getJwtToken(imsConfig) {
+async function getJwtToken(imsConfig: imsConfig) {
     await context.set('genjwt', imsConfig, true)
     await context.setCurrent('genjwt')
     const token = await getToken('genjwt')
