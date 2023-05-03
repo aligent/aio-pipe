@@ -6,7 +6,7 @@ import { env } from './env';
 function asyncSpawn(command: string, args?: ReadonlyArray<string>, options?: cp.SpawnOptionsWithoutStdio): Promise<number | null> {
     return new Promise(function (resolve, reject) {
         const process = cp.spawn(command, args, options);
-        if (env.debug) console.log(`ℹ️ Executing command: ${command} ${args?.join(' ')}`);
+        if (env.debug) console.log(`ℹ️ Executing command: ${command} ${args?.join(' ')} with options: ${JSON.stringify(options)}`);
 
         process.stdout.on('data', (data) => {
             console.log(data.toString());
@@ -26,11 +26,6 @@ function asyncSpawn(command: string, args?: ReadonlyArray<string>, options?: cp.
         });
     });
 }
-
-function nodeUserAsyncSpawn(command: string, args?: ReadonlyArray<string>, workDir?: string): Promise<number | null> {
-    return asyncSpawn('sudo', ['-u', 'node', command, ...(args ? args : [])], { cwd: workDir });
-}
-
 interface Command {
     command: string,
     args: ReadonlyArray<string>
@@ -47,7 +42,7 @@ function splitCommandAndArgs(command: string): Command {
 
 function runCommandString(command: string, workDir?: string): Promise<number | null> {
     const cmd = splitCommandAndArgs(command);
-    return nodeUserAsyncSpawn(cmd.command, cmd.args, workDir);
+    return asyncSpawn(cmd.command, cmd.args, { cwd: workDir });
 }
 
 const getDirectories = (source: string) =>
