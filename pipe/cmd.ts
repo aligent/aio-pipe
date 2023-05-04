@@ -1,6 +1,7 @@
 import * as cp from 'child_process'
 import { readdirSync } from 'fs'
-import { env } from './env';
+import { env, writeEnv } from './env';
+import { getAuthToken } from './jwt';
 
 // Wrap spawn in a promise
 function asyncSpawn(command: string, args?: ReadonlyArray<string>, options?: cp.SpawnOptionsWithoutStdio): Promise<number | null> {
@@ -46,9 +47,9 @@ function runCommandString(command: string, workDir?: string): Promise<number | n
 }
 
 const getDirectories = (source: string) =>
-  readdirSync(source, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name)
+    readdirSync(source, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name)
 
 export async function runCLICommand(commandStr: Array<string>) {
     const workDirs = ((): string[] => {
@@ -64,6 +65,15 @@ export async function runCLICommand(commandStr: Array<string>) {
     // loop through each directory in the mono repo and run the selected command 
     for (const workDir of workDirs) {
         console.log(`▶️ Running aio commands in ${workDir}`)
+
+        // Authenticate
+        const token = await getAuthToken(workDir);
+        writeEnv('AIO_IMS_CONTEXTS_CLI_ACCESS__TOKEN_TOKEN', token.token, workDir)
+        writeEnv('AIO_IMS_CONTEXTS_CLI_ACCESS__TOKEN_EXPIRY', token.expiry, workDir)
+        
+        // TODO: get environment variables for each service
+        // runtime_auth and runtime_namespace
+
         for (const cmd of commandStr) {
             await runCommandString(cmd, workDir)
         }

@@ -1,5 +1,4 @@
 import { runCLICommand } from "./cmd"
-import { generateAuthToken } from "./jwt"
 import { env } from "./env"
 
 let commandStr: string[] = []
@@ -11,11 +10,10 @@ switch (env.command ? env.command.toLowerCase() : '') {
     commandStr.push("aio app build");
     break;
   case 'deploy':
-    generateAuthToken();
     commandStr.push('aio app deploy --no-build');
     break;
   case 'auth':
-    generateAuthToken();
+    // Authentication happens by default
     break;
 }
 
@@ -23,8 +21,8 @@ if (env.debug) console.log(`ℹ️ Running pipeline in ${env.command} mode`);
 
 runCLICommand(commandStr)
     .then(() => {
-        console.log("🕺 Pipeline run was successful")
+        console.log(`🕺 ${env.command} was successful`)
     })
     .catch(() =>{
-        throw new Error("💀 Pipeline run failed")
+        throw new Error(`💀 ${env.command} failed`)
     })

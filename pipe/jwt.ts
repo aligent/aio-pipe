@@ -1,34 +1,5 @@
 const { context, getToken } = require('@adobe/aio-lib-ims')
-import { env } from "./env"
-
-    // TODO: try and get this into a similar format to the below file
-    // to see if that authentication method works 
-    // may just try using this library? @adobe/aio-lib-ims
-
-//     ```js
-// {
-//   ims: {
-//     contexts: {
-//       sample_jwt: {
-//         client_id: "<jwt-clientid>",
-//         client_secret: "XXX",
-//         technical_account_id: "<guid>@techacct.adobe.com",
-//         meta_scopes: [
-//           "ent_dataservices_sdk"
-//         ],
-//         ims_org_id: "<org-guid>@AdobeOrg",
-//         private_key: "XXX"
-//       },
-//       sample_oauth2: {
-//         redirect_uri: "https://callback.example.com",
-//         client_id: "<oauth2-clientid>",
-//         client_secret: "XXX",
-//         scope: "openid AdobeID"
-//       },
-//     }
-//   }
-// }
-// ```
+import { env, getEnv } from "./env"
 
 interface imsConfig {
     client_id: string,
@@ -39,7 +10,16 @@ interface imsConfig {
     meta_scopes: string[]
 }
 
-export function generateAuthToken() {
+export interface AuthToken {
+    token: string,
+    expiry: string
+}
+
+export async function getAuthToken(workDir: string): Promise<AuthToken> {
+    return getExistingAuthToken(workDir) || await generateAuthToken()
+}
+
+export async function generateAuthToken(): Promise<AuthToken> {
     const key = process.env.KEY || ''
     const scopes = process.env.SCOPES || 'ent_eventpublisher_sdk'
     const clientId = process.env.CLIENT_ID!
@@ -58,16 +38,50 @@ export function generateAuthToken() {
         ]
     }
 
-    getJwtToken(imsConfig)
-        .then(async res => {
-            if (env.debug) console.log('ℹ️ Generated auth token successfully')
-            if (env.debug) console.log(`ℹ️ CLI_ACCESS_TOKEN=${res}`)
+    return getJwtToken(imsConfig)
+        .then(async token => {
+            console.log('ℹ️ Generated auth token successfully')
+            if (env.debug) console.log(`ℹ️ CLI_ACCESS_TOKEN=${token}`)
+
+            const expiry = Date.now() + 30 * 60 * 1000
+            return {
+                token: token,
+                expiry: expiry.toString()
+            }
         })
 }
 
-async function getJwtToken(imsConfig: imsConfig) {
+async function getJwtToken(imsConfig: imsConfig): Promise<string> {
     await context.set('genjwt', imsConfig, true)
     await context.setCurrent('genjwt')
     const token = await getToken('genjwt')
     return token
+}
+
+function isValidAuthToken(authToken: unknown): authToken is AuthToken {
+    const token = (authToken as AuthToken).token
+    const expiry = (authToken as AuthToken).expiry
+
+    const expiryInt = parseInt(expiry)
+
+    if (isNaN(expiryInt))
+        return false
+
+    return token !== undefined && expiryInt > new Date().getTime()
+}
+
+export function getExistingAuthToken(workDir: string): AuthToken | undefined {
+    const token = getEnv('AIO_IMS_CONTEXTS_CLI_ACCESS__TOKEN_TOKEN', workDir)
+    const expiry = getEnv('AIO_IMS_CONTEXTS_CLI_ACCESS__TOKEN_EXPIRY', workDir)
+
+    const authToken = { token, expiry }
+
+    if (isValidAuthToken(authToken)) {
+        if (env.debug) console.log(`ℹ️ Got existing auth token values`);
+        
+        return authToken
+    }
+
+    if (env.debug) console.log(`ℹ️ Existing auth token was not found or has expired`);
+    return
 }
