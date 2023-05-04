@@ -65,14 +65,18 @@ export async function runCLICommand(commandStr: Array<string>) {
     // loop through each directory in the mono repo and run the selected command 
     for (const workDir of workDirs) {
         console.log(`▶️ Running aio commands in ${workDir}`)
+        const serviceName = workDir.split('/').pop() || 'default'
 
         // Authenticate
-        const token = await getAuthToken(workDir);
+        const token = await getAuthToken(serviceName, workDir);
         writeEnv('AIO_IMS_CONTEXTS_CLI_ACCESS__TOKEN_TOKEN', token.token, workDir)
         writeEnv('AIO_IMS_CONTEXTS_CLI_ACCESS__TOKEN_EXPIRY', token.expiry, workDir)
-        
-        // TODO: get environment variables for each service
-        // runtime_auth and runtime_namespace
+
+        const runtime = env.runtimes[serviceName]
+        if (env.debug) console.log(`ℹ️ Got the following runtime values for the ${serviceName} service: ${JSON.stringify(runtime)})`)
+
+        writeEnv('AIO_runtime_auth', runtime.auth, workDir) 
+        writeEnv('AIO_runtime_namespace', runtime.namespace, workDir) 
 
         for (const cmd of commandStr) {
             await runCommandString(cmd, workDir)

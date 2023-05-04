@@ -15,17 +15,19 @@ export interface AuthToken {
     expiry: string
 }
 
-export async function getAuthToken(workDir: string): Promise<AuthToken> {
-    return getExistingAuthToken(workDir) || await generateAuthToken()
+export async function getAuthToken(serviceName: string, workDir: string): Promise<AuthToken> {
+    return getExistingAuthToken(workDir) || await generateAuthToken(serviceName)
 }
 
-export async function generateAuthToken(): Promise<AuthToken> {
-    const key = process.env.KEY || ''
-    const scopes = process.env.SCOPES || 'ent_eventpublisher_sdk'
-    const clientId = process.env.CLIENT_ID!
-    const clientSecret = process.env.CLIENT_SECRET!
-    const techAccId = process.env.TECHNICAL_ACCOUNT_ID!
-    const imsOrgId = process.env.IMS_ORG_ID!
+export async function generateAuthToken(serviceName: string): Promise<AuthToken> {
+    if (env.debug) console.log(`ℹ️ Generating access token for ${serviceName}`) 
+
+    const key = process.env[`${serviceName.toUpperCase()}_KEY`] || ''
+    const scopes = process.env[`${serviceName.toUpperCase()}_SCOPES`] || 'ent_eventpublisher_sdk'
+    const clientId = process.env[`${serviceName.toUpperCase()}_CLIENT_ID`] || ''
+    const clientSecret = process.env[`${serviceName.toUpperCase()}_CLIENT_SECRET`] || ''
+    const techAccId = process.env[`${serviceName.toUpperCase()}_TECHNICAL_ACCOUNT_ID`] || ''
+    const imsOrgId = process.env[`${serviceName.toUpperCase()}_IMS_ORG_ID`] || ''
 
     const imsConfig: imsConfig = {
         client_id: clientId,
